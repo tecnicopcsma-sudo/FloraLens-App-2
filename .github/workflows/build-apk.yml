@@ -1,0 +1,31 @@
+name: Build FloraLens APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Unzip website
+        run: |
+          mkdir -p build
+          unzip -o "FloraLens-AI-main.zip" -d build
+
+      - name: Convert website -> APK
+        uses: darkshredder/web-to-app-action@v1
+        with:
+          build-folder-path: 'build'
+          app-name: 'FloraLens'
+          output-folder-path: 'apk'
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FloraLens-APK
+          path: apk/
