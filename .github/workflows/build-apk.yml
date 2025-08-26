@@ -11,20 +11,20 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: Unzip website
+        run: |
+          mkdir -p build
+          unzip -o "FloraLens-AI-main.zip" -d build
+
+      - name: Convertir sitio web en APK
+        uses: darkshredder/web-to-app-action@v1
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Dar permisos a gradlew
-        run: chmod +x ./gradlew
-
-      - name: Compilar APK (Debug)
-        run: ./gradlew assembleDebug
+          build-folder-path: 'build'
+          app-name: 'FloraLens'
+          output-folder-path: 'apk'
 
       - name: Subir APK como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: FloraLens-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: apk/
