@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FloraLens AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .hidden {
+      display: none !important;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react/": "https://esm.sh/react@^19.1.1/"
+  }
+}
+</script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+
+  <!-- SVG Icon Definitions -->
+  <svg class="hidden">
+    <symbol id="icon-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 4 13V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <path d="M11 4A7 7 0 0 1 18 11v1a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1a9 9 0 0 0-9-9h-1"></path>
+    </symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </symbol>
+    <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+      <circle cx="12" cy="13" r="4"></circle>
+    </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </symbol>
+    <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="18" cy="5" r="3"></circle>
+      <circle cx="6" cy="12" r="3"></circle>
+      <circle cx="18" cy="19" r="3"></circle>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+    </symbol>
+     <symbol id="icon-origin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    </symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </symbol>
+    <symbol id="icon-health" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+    </symbol>
+    <symbol id="icon-treatment" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line>
+    </symbol>
+  </svg>
+
+  <div id="app" class="min-h-screen text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div 
+      class="absolute top-0 left-0 w-full h-full bg-cover bg-center opacity-10 dark:opacity-5" 
+      style="background-image: url(https://picsum.photos/1920/1080?blur=5&grayscale&random=1)"
+    ></div>
+    <div class="relative z-10">
+      <header class="py-6">
+        <div class="container mx-auto px-4">
+          <div class="flex items-center justify-center space-x-3">
+            <svg class="w-8 h-8 text-green-600 dark:text-green-400"><use href="#icon-leaf"></use></svg>
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
+              FloraLens AI
+            </h1>
+          </div>
+        </div>
+      </header>
+      <main class="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+        <div id="main-content" class="bg-white dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-10 border border-gray-200 dark:border-gray-700">
+          
+          <!-- Uploader View -->
+          <div id="uploader-view">
+             <h2 id="uploader-title" class="text-2xl md:text-3xl font-bold text-center text-gray-700 dark:text-gray-300 mb-6">
+                Descubre el mundo de tus plantas
+              </h2>
+            <div id="image-preview-container" class="w-full max-w-lg mx-auto hidden mb-8">
+              <img id="image-preview" src="" alt="Vista previa de la planta" class="rounded-xl shadow-lg w-full h-auto object-cover" />
+            </div>
+            <div id="upload-buttons" class="flex flex-col items-center justify-center w-full space-y-6">
+              <p class="text-center text-gray-500 dark:text-gray-400">
+                  Sube una foto o usa tu cámara para identificar una planta.
+              </p>
+              <div class="flex flex-col sm:flex-row gap-4">
+                  <input type="file" id="file-input" class="hidden" accept="image/*" />
+                  <button id="upload-button" class="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition-all duration-300 transform hover:scale-105 shadow-md">
+                      <svg class="w-6 h-6"><use href="#icon-upload"></use></svg>
+                      <span>Cargar archivo</span>
+                  </button>
+                  <button id="camera-button" class="flex items-center justify-center gap-3 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 dark:focus:ring-indigo-800 transition-all duration-300 transform hover:scale-105 shadow-md">
+                      <svg class="w-6 h-6"><use href="#icon-camera"></use></svg>
+                      <span>Usar cámara</span>
+                  </button>
+              </div>
+            </div>
+             <div id="analyze-button-container" class="text-center mt-8 hidden">
+                <button id="analyze-button" class="px-8 py-4 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  Analizar Planta
+                </button>
+              </div>
+          </div>
+
+          <!-- Loading View -->
+          <div id="loading-view" class="hidden">
+            <div class="flex flex-col items-center justify-center my-12">
+              <div class="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              <p class="mt-4 text-lg font-medium text-gray-600 dark:text-gray-300">
+                Analizando... esto puede tardar unos segundos.
+              </p>
+            </div>
+          </div>
+
+          <!-- Results View -->
+          <div id="results-view" class="hidden">
+            <!-- Dynamic content will be injected here -->
+          </div>
+
+           <p id="error-message" class="text-center text-red-500 mt-6 font-semibold"></p>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Camera Modal -->
+  <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 hidden">
+      <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl relative">
+        <button id="close-camera-button" class="absolute -top-3 -right-3 text-white bg-red-600 rounded-full p-2 z-10 hover:bg-red-700 transition-colors">
+             <svg class="w-6 h-6"><use href="#icon-close"></use></svg>
+        </button>
+        <div id="camera-error-container" class="p-8 text-center text-white hidden">
+           <p class="text-red-400"></p>
+        </div>
+        <div id="camera-stream-container" class="p-2">
+           <video id="video-element" autoplay playsinline class="w-full h-auto rounded-md aspect-video"></video>
+           <canvas id="canvas-element" class="hidden"></canvas>
+        </div>
+        <div id="camera-capture-container" class="flex justify-center p-4">
+            <button id="capture-button" class="p-4 bg-white rounded-full focus:outline-none focus:ring-4 focus:ring-blue-300 hover:bg-gray-200 transition-all transform hover:scale-110" aria-label="Tomar foto">
+                <svg class="w-8 h-8 text-gray-800"><use href="#icon-camera"></use></svg>
+            </button>
+        </div>
+      </div>
+    </div>
+
+
+  <script type="module">
+    import { GoogleGenAI, Type } from 'https://esm.sh/@google/genai';
+
+    // --- DOM Elements ---
+    const uploaderView = document.getElementById('uploader-view');
+    const loadingView = document.getElementById('loading-view');
+    const resultsView = document.getElementById('results-view');
+    const errorMessage = document.getElementById('error-message');
+    const uploaderTitle = document.getElementById('uploader-title');
+    
+    const fileInput = document.getElementById('file-input');
+    const uploadButton = document.getElementById('upload-button');
+    const cameraButton = document.getElementById('camera-button');
+    const analyzeButton = document.getElementById('analyze-button');
+    const analyzeButtonContainer = document.getElementById('analyze-button-container');
+    const uploadButtons = document.getElementById('upload-buttons');
+    
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+
+    const cameraModal = document.getElementById('camera-modal');
+    const closeCameraButton = document.getElementById('close-camera-button');
+    const videoElement = document.getElementById('video-element');
+    const canvasElement = document.getElementById('canvas-element');
+    const captureButton = document.getElementById('capture-button');
+    const cameraErrorContainer = document.getElementById('camera-error-container');
+    const cameraStreamContainer = document.getElementById('camera-stream-container');
+    const cameraCaptureContainer = document.getElementById('camera-capture-container');
+
+    // --- State ---
+    let imageFile = null;
+    let mediaStream = null;
+
+    // --- Gemini AI Service ---
+    if (!process.env.API_KEY) {
+        showError("API_KEY environment variable not set. This application requires a valid Gemini API key to function.");
+        uploadButton.disabled = true;
+        cameraButton.disabled = true;
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const model = "gemini-2.5-flash";
+
+    const responseSchema = {
+      type: Type.OBJECT,
+      properties: {
+          commonName: { type: Type.STRING, description: "El nombre común de la planta." },
+          scientificName: { type: Type.STRING, description: "El nombre científico de la planta." },
+          origin: { type: Type.STRING, description: "La región de origen de la planta." },
+          description: { type: Type.STRING, description: "Una breve y fascinante descripción de la planta." },
+          isHealthy: { type: Type.BOOLEAN, description: "¿La planta parece sana?" },
+          healthAssessment: { type: Type.STRING, description: "Una descripción del estado de salud de la planta. Si está enferma, nombra la enfermedad o plaga." },
+          careRecommendations: {
+              type: Type.ARRAY,
+              description: "Si la planta está enferma, una lista de pasos detallados para curarla. Si está sana, consejos generales de cuidado.",
+              items: { type: Type.STRING }
+          }
+      },
+      required: ["commonName", "scientificName", "origin", "description", "isHealthy", "healthAssessment", "careRecommendations"]
+    };
+
+    const identifyPlant = async (base64Image, mimeType) => {
+      const prompt = `Identifica la planta en esta imagen. Proporciona su nombre común, nombre científico, origen y una breve descripción. Evalúa el estado de salud de la planta. - Si la planta está enferma, identifica la enfermedad o plaga y proporciona una guía paso a paso detallada sobre cómo tratarla. - Si la planta está sana, proporciona consejos generales de cuidado (riego, luz, etc.). Responde en español.`;
+      const imagePart = { inlineData: { data: base64Image, mimeType: mimeType } };
+      const textPart = { text: prompt };
+
+      try {
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: { parts: [imagePart, textPart] },
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+                temperature: 0.2,
+            }
+        });
+        const jsonString = result.text.trim();
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error("Error calling Gemini API:", error);
+        throw new Error("Failed to get a valid response from the AI model.");
+      }
+    };
+
+    // --- UI View Management ---
+    const showView = (view) => {
+      uploaderView.classList.add('hidden');
+      loadingView.classList.add('hidden');
+      resultsView.classList.add('hidden');
+      if (view === 'uploader') uploaderView.classList.remove('hidden');
+      if (view === 'loading') loadingView.classList.remove('hidden');
+      if (view === 'results') resultsView.classList.remove('hidden');
+    };
+
+    const showError = (message) => {
+      errorMessage.textContent = message;
+    };
+    
+    // --- Event Handlers & Logic ---
+    const handleImageChange = (file) => {
+      if (!file) return;
+      imageFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreviewContainer.classList.remove('hidden');
+        analyzeButtonContainer.classList.remove('hidden');
+        uploadButtons.classList.add('hidden');
+        uploaderTitle.classList.add('hidden');
+        errorMessage.textContent = '';
+      };
+      reader.readAsDataURL(file);
+    };
+
+    const fileToBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = (error) => reject(error);
+      });
+    };
+
+    const handleAnalyzeClick = async () => {
+      if (!imageFile) {
+        showError('Por favor, selecciona una imagen primero.');
+        return;
+      }
+      showError('');
+      showView('loading');
+
+      try {
+        const base64Image = await fileToBase64(imageFile);
+        const mimeType = imageFile.type;
+        const data = await identifyPlant(base64Image, mimeType);
+        renderPlantDetails(data);
+        showView('results');
+      } catch (err) {
+        console.error(err);
+        showError('No se pudo analizar la imagen. Por favor, inténtalo de nuevo.');
+        showView('uploader');
+      }
+    };
+
+    const resetApp = () => {
+      imageFile = null;
+      imagePreview.src = '';
+      imagePreviewContainer.classList.add('hidden');
+      analyzeButtonContainer.classList.add('hidden');
+      uploadButtons.classList.remove('hidden');
+      uploaderTitle.classList.remove('hidden');
+      resultsView.innerHTML = '';
+      showError('');
+      showView('uploader');
+    };
+
+    const renderPlantDetails = (data) => {
+        const { commonName, scientificName, origin, description, isHealthy, healthAssessment, careRecommendations } = data;
+        const shareText = `¡He identificado una planta con FloraLens AI! Es un(a) ${commonName} (${scientificName}).\n\nEstado de salud: ${healthAssessment}.`;
+
+        resultsView.innerHTML = `
+            <div class="space-y-6 animate-fade-in">
+                <div class="text-center pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-4xl font-bold text-green-700 dark:text-green-400">${commonName}</h2>
+                    <p class="text-lg italic text-gray-500 dark:text-gray-400">${scientificName}</p>
+                </div>
+            
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white/5 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div class="flex items-center gap-3 mb-3">
+                          <svg class="w-6 h-6 text-yellow-500"><use href="#icon-origin"></use></svg>
+                          <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Origen</h3>
+                      </div>
+                      <p class="text-gray-600 dark:text-gray-300 leading-relaxed">${origin}</p>
+                    </div>
+                    <div class="bg-white/5 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div class="flex items-center gap-3 mb-3">
+                          <svg class="w-6 h-6 text-blue-500"><use href="#icon-info"></use></svg>
+                          <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Descripción</h3>
+                      </div>
+                      <p class="text-gray-600 dark:text-gray-300 leading-relaxed">${description}</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/5 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-3 mb-3">
+                      <svg class="w-6 h-6 ${isHealthy ? 'text-green-500' : 'text-red-500'}"><use href="#icon-health"></use></svg>
+                      <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Estado de Salud</h3>
+                    </div>
+                    <p class="font-semibold ${isHealthy ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}">${isHealthy ? 'Saludable' : 'Necesita atención'}</p>
+                    <p class="mt-2 text-gray-600 dark:text-gray-300 leading-relaxed">${healthAssessment}</p>
+                </div>
+
+                <div class="bg-white/5 dark:bg-gray-900/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-3 mb-3">
+                      <svg class="w-6 h-6 ${isHealthy ? 'text-green-500' : 'text-orange-500'}"><use href="${isHealthy ? '#icon-leaf' : '#icon-treatment'}"></use></svg>
+                      <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">${isHealthy ? 'Consejos de Cuidado' : 'Plan de Tratamiento'}</h3>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300 leading-relaxed">
+                        ${careRecommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="text-center pt-4 space-y-4">
+                  ${navigator.share ? `<button id="share-button" class="flex items-center justify-center gap-3 px-6 py-3 bg-gray-700 text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 transition-all duration-300 transform hover:scale-105">
+                     <svg class="w-6 h-6"><use href="#icon-share"></use></svg>
+                     <span>Compartir Descubrimiento</span>
+                   </button>` : ''}
+                   <button id="reset-button" class="px-6 py-3 bg-gray-500 text-white font-bold rounded-full hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 transition-all duration-300">
+                    Analizar otra planta
+                  </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('reset-button').addEventListener('click', resetApp);
+        
+        const shareButton = document.getElementById('share-button');
+        if (shareButton) {
+            shareButton.addEventListener('click', async () => {
+                try {
+                    await navigator.share({ title: 'Descubrimiento de Planta con FloraLens AI', text: shareText });
+                } catch (error) {
+                    console.error('Error al compartir:', error);
+                    alert('No se pudo compartir.');
+                }
+            });
+        }
+    };
+    
+    // --- Camera Logic ---
+    const openCamera = async () => {
+        cameraModal.classList.remove('hidden');
+        cameraErrorContainer.classList.add('hidden');
+        cameraStreamContainer.classList.remove('hidden');
+        cameraCaptureContainer.classList.remove('hidden');
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            videoElement.srcObject = mediaStream;
+        } catch (err) {
+            console.error("Error accessing camera: ", err);
+            cameraErrorContainer.querySelector('p').textContent = "No se pudo acceder a la cámara. Asegúrate de haber otorgado los permisos necesarios.";
+            cameraErrorContainer.classList.remove('hidden');
+            cameraStreamContainer.classList.add('hidden');
+            cameraCaptureContainer.classList.add('hidden');
+        }
+    };
+    
+    const closeCamera = () => {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+        }
+        cameraModal.classList.add('hidden');
+    };
+    
+    const capturePhoto = () => {
+        const context = canvasElement.getContext('2d');
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+        context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        canvasElement.toBlob(blob => {
+            const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            handleImageChange(file);
+            closeCamera();
+        }, 'image/jpeg');
+    };
+
+    // --- Initial Setup ---
+    uploadButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (event) => handleImageChange(event.target.files[0]));
+    analyzeButton.addEventListener('click', handleAnalyzeClick);
+    cameraButton.addEventListener('click', openCamera);
+    closeCameraButton.addEventListener('click', closeCamera);
+    captureButton.addEventListener('click', capturePhoto);
+
+    showView('uploader');
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "FloraLens AI",
+  "description": "An intelligent plant identifier application. Upload a photo of a plant to discover its species, origin, and health status. Get expert recommendations for care and treatment if your plant is sick.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
