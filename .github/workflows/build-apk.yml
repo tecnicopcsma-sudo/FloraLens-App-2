@@ -17,11 +17,14 @@ jobs:
           unzip -o "FloraLens-AI-main.zip" -d build
 
       - name: Convertir sitio web en APK
-        uses: darkshredder/web-to-app-action@v1
+        uses: khanhas/web2apk-action@v1.0.0
         with:
-          build-folder-path: 'build'
-          app-name: 'FloraLens'
-          output-folder-path: 'apk'
+          input: build
+          name: FloraLens
+          package: com.floralens.app
+          versionName: 1.0.0
+          versionCode: 1
+          output: apk
 
       - name: Subir APK como artefacto
         uses: actions/upload-artifact@v4
